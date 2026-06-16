@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Моніторинг аккумулятотра</title>
+    <title>Моніторинг АКБ</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
@@ -34,11 +34,28 @@
             letter-spacing: 1px;
         }
 
+        .gauge-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        /* Стиль для підписів НАД кругами */
+        .gauge-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        #volt-title { color: var(--volt-color); }
+        #amp-title { color: var(--amp-color); }
+
         .gauge-container {
             position: relative;
             width: 200px;
-            height: 160px;
-            margin-bottom: 40px;
+            height: 160px; /* Зрізаємо знизу, бо у нас 3/4 кола */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -47,7 +64,7 @@
         svg {
             width: 100%;
             height: 100%;
-            transform: rotate(-225deg);
+            transform: rotate(-225deg); /* Поворот, щоб розрив був знизу */
             transform-origin: center;
         }
 
@@ -55,6 +72,8 @@
             fill: none;
             stroke: #333;
             stroke-width: 12;
+            /* Довжина кола 2 * pi * r (2 * 3.14 * 40 = 251.2) */
+            /* Видима частина 3/4 кола ~188, пропуск ~63 */
             stroke-dasharray: 188 251; 
             stroke-linecap: round;
         }
@@ -73,44 +92,44 @@
         .gauge-text {
             position: absolute;
             top: 45%;
-            left: 50%;
+            left: 50 Img;
             transform: translate(-50%, -50%);
             text-align: center;
         }
 
         .gauge-value {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: bold;
-        }
-
-        .gauge-label {
-            font-size: 0.9rem;
-            color: #888;
-            margin-top: 4px;
         }
     </style>
 </head>
 <body>
 
-    <div class="gauge-container">
-        <svg viewBox="0 0 100 100">
-            <circle class="bg-circle" cx="50" cy="50" r="40"/>
-            <circle class="value-circle" id="volt-circle" cx="50" cy="50" r="40"/>
-        </svg>
-        <div class="gauge-text">
-            <div class="gauge-value" id="volt-val">0.0</div>
-            <div class="gauge-label"></div>
+    <h2>Статус акумулятора</h2>
+
+    <div class="gauge-section">
+        <div class="gauge-title" id="volt-title">Напруга</div>
+        <div class="gauge-container">
+            <svg viewBox="0 0 100 100">
+                <circle class="bg-circle" cx="50" cy="50" r="40"/>
+                <circle class="value-circle" id="volt-circle" cx="50" cy="50" r="40"/>
+            </svg>
+            <div class="gauge-text">
+                <div class="gauge-value" id="volt-val">0.0 В</div>
+            </div>
         </div>
     </div>
 
-    <div class="gauge-container">
-        <svg viewBox="0 0 100 100">
-            <circle class="bg-circle" cx="50" cy="50" r="40"/>
-            <circle class="value-circle" id="amp-circle" cx="50" cy="50" r="40"/>
-        </svg>
-        <div class="gauge-text">
-            <div class="gauge-value" id="amp-val">0.0</div>
-            <div class="gauge-label"></div>
+    <div class="gauge-section">
+        <div class="gauge-title" id="amp-title">Струм</div>
+        <div class="gauge-container">
+            <svg viewBox="0 0 100 100">
+                <circle class="bg-circle" cx="50" cy="50" r="40"/>
+                <circle class="value-circle" id="amp-circle" cx="50" cy="50" r="40"/>
+            </svg>
+            <div class="gauge-text">
+                <div class="gauge-value" id="amp-val">0.0 А</div>
+            </div>
         </div>
     </div>
 
@@ -118,7 +137,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // ТВОЙ РЕАЛЬНЫЙ КОНФИГ С ФОТОГРАФИИ
+        // Твій конфіг Firebase (залишається незмінним)
         const firebaseConfig = {
             apiKey: "AIzaSyAH22TUAiZ0IW7nDY6EG1A61ABLYena07M",
             authDomain: "monitoringakb-546af.firebaseapp.com",
@@ -130,14 +149,12 @@
             measurementId: "G-FHEX3F0M2J"
         };
 
-        // Инициализируем Firebase
+        // Ініціалізація Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-
-        // Ссылка на ветку "telemetry"
         const telemetryRef = ref(db, 'telemetry/');
 
-        // Настройки шкал
+        // Максимальні значення для шкал
         const MAX_VOLTS = 15.0; 
         const MAX_AMPS = 10.0;  
 
@@ -152,17 +169,16 @@
             text.innerText = value.toFixed(1) + unit;
         }
 
-        // Слушаем Firebase в реальном времени
+        // Слухаємо базу даних в реальному часі
         onValue(telemetryRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                // Если в базе есть данные, обновляем круги
                 updateGauge(data.voltage || 0, MAX_VOLTS, 'volt-circle', 'volt-val', ' В');
                 updateGauge(data.current || 0, MAX_AMPS, 'amp-circle', 'amp-val', ' А');
             }
         });
 
-        // Готовим Telegram Mini App
+        // Ініціалізація Telegram Mini App
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
     </script>
