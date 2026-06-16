@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг АКБ</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --volt-color: #00ffcc;
+            --amp-color: #ff9900;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            margin-bottom: 30px;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 200px;
+            height: 160px;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-225deg);
+            transform-origin: center;
+        }
+
+        .bg-circle {
+            fill: none;
+            stroke: #333;
+            stroke-width: 12;
+            stroke-dasharray: 188 251; 
+            stroke-linecap: round;
+        }
+
+        .value-circle {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 0 251; 
+            transition: stroke-dasharray 0.5s ease-in-out;
+        }
+
+        #volt-circle { stroke: var(--volt-color); }
+        #amp-circle { stroke: var(--amp-color); }
+
+        .gauge-text {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .gauge-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Статус аккумулятора</h2>
+
+    <div class="gauge-container">
+        <svg viewBox="0 0 100 100">
+            <circle class="bg-circle" cx="50" cy="50" r="40"/>
+            <circle class="value-circle" id="volt-circle" cx="50" cy="50" r="40"/>
+        </svg>
+        <div class="gauge-text">
+            <div class="gauge-value" id="volt-val">0.0</div>
+            <div class="gauge-label">Вольты</div>
+        </div>
+    </div>
+
+    <div class="gauge-container">
+        <svg viewBox="0 0 100 100">
+            <circle class="bg-circle" cx="50" cy="50" r="40"/>
+            <circle class="value-circle" id="amp-circle" cx="50" cy="50" r="40"/>
+        </svg>
+        <div class="gauge-text">
+            <div class="gauge-value" id="amp-val">0.0</div>
+            <div class="gauge-label">Амперы</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // ТВОЙ РЕАЛЬНЫЙ КОНФИГ С ФОТОГРАФИИ
+        const firebaseConfig = {
+            apiKey: "AIzaSyAH22TUAiZ0IW7nDY6EG1A61ABLYena07M",
+            authDomain: "monitoringakb-546af.firebaseapp.com",
+            databaseURL: "https://monitoringakb-546af-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "monitoringakb-546af",
+            storageBucket: "monitoringakb-546af.firebasestorage.app",
+            messagingSenderId: "56049189465",
+            appId: "1:56049189465:web:70286986354e510fa686fc",
+            measurementId: "G-FHEX3F0M2J"
+        };
+
+        // Инициализируем Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Ссылка на ветку "telemetry"
+        const telemetryRef = ref(db, 'telemetry/');
+
+        // Настройки шкал
+        const MAX_VOLTS = 15.0; 
+        const MAX_AMPS = 10.0;  
+
+        function updateGauge(value, max, circleId, textId, unit) {
+            const circle = document.getElementById(circleId);
+            const text = document.getElementById(textId);
+            
+            let val = Math.min(Math.max(value, 0), max); 
+            const dashArrayValue = (val / max) * 188;
+            
+            circle.style.strokeDasharray = `${dashArrayValue} 251`;
+            text.innerText = value.toFixed(1) + unit;
+        }
+
+        // Слушаем Firebase в реальном времени
+        onValue(telemetryRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                // Если в базе есть данные, обновляем круги
+                updateGauge(data.voltage || 0, MAX_VOLTS, 'volt-circle', 'volt-val', ' В');
+                updateGauge(data.current || 0, MAX_AMPS, 'amp-circle', 'amp-val', ' А');
+            }
+        });
+
+        // Готовим Telegram Mini App
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+    </script>
+</body>
+</html>
