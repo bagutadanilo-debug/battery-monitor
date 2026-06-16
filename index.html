@@ -41,7 +41,6 @@
             margin-bottom: 25px;
         }
 
-        /* Стиль для підписів НАД кругами */
         .gauge-title {
             font-size: 1.2rem;
             font-weight: 500;
@@ -55,7 +54,7 @@
         .gauge-container {
             position: relative;
             width: 200px;
-            height: 160px; /* Зрізаємо знизу, бо у нас 3/4 кола */
+            height: 160px; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -64,7 +63,7 @@
         svg {
             width: 100%;
             height: 100%;
-            transform: rotate(-225deg); /* Поворот, щоб розрив був знизу */
+            transform: rotate(-225deg); 
             transform-origin: center;
         }
 
@@ -72,8 +71,6 @@
             fill: none;
             stroke: #333;
             stroke-width: 12;
-            /* Довжина кола 2 * pi * r (2 * 3.14 * 40 = 251.2) */
-            /* Видима частина 3/4 кола ~188, пропуск ~63 */
             stroke-dasharray: 188 251; 
             stroke-linecap: round;
         }
@@ -89,17 +86,23 @@
         #volt-circle { stroke: var(--volt-color); }
         #amp-circle { stroke: var(--amp-color); }
 
+        /* ВИПРАВЛЕНИЙ БЛОК ЦЕНТРУВАННЯ ТЕКСТУ */
         .gauge-text {
             position: absolute;
             top: 45%;
-            left: 50 Img;
+            left: 50%;
             transform: translate(-50%, -50%);
+            width: 100%;
             text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .gauge-value {
             font-size: 2.2rem;
             font-weight: bold;
+            white-space: nowrap; /* Забороняє буквам переноситися чи злипатися */
         }
     </style>
 </head>
@@ -137,7 +140,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Твій конфіг Firebase (залишається незмінним)
         const firebaseConfig = {
             apiKey: "AIzaSyAH22TUAiZ0IW7nDY6EG1A61ABLYena07M",
             authDomain: "monitoringakb-546af.firebaseapp.com",
@@ -149,12 +151,10 @@
             measurementId: "G-FHEX3F0M2J"
         };
 
-        // Ініціалізація Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const telemetryRef = ref(db, 'telemetry/');
 
-        // Максимальні значення для шкал
         const MAX_VOLTS = 15.0; 
         const MAX_AMPS = 10.0;  
 
@@ -169,7 +169,6 @@
             text.innerText = value.toFixed(1) + unit;
         }
 
-        // Слухаємо базу даних в реальному часі
         onValue(telemetryRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -178,7 +177,6 @@
             }
         });
 
-        // Ініціалізація Telegram Mini App
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
     </script>
