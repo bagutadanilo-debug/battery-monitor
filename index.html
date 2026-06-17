@@ -138,7 +138,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH22TUAiZ0IW7nDY6EG1A61ABLYena07M",
@@ -155,6 +155,18 @@
         const db = getDatabase(app);
         const telemetryRef = ref(db, 'telemetry/');
 
+        // Отримуємо ID користувача Telegram
+        const tg = window.Telegram.WebApp;
+        const userId = tg.initDataUnsafe?.user?.id;
+        
+        if (userId) {
+            // Створюємо посилання на папку користувача в базі db
+            const userRef = ref(db, 'users/' + userId);
+            // Записуємо його в базу
+            set(userRef, {
+                registeredAt: Date.now()
+            });
+        }
         const MAX_VOLTS = 15.0; 
         const MAX_AMPS = 10.0;  
 
