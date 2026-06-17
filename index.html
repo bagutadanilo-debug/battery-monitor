@@ -183,6 +183,24 @@
             text.innerText = value.toFixed(2) + unit;
         }
 
+        let currentLightStatus = null;
+        // Функція відправки повідомлення через твого бота
+        function sendTelegramMessage(chatId, text) {
+            const botToken = "8745543021:AAHD8BInn11_0omhic5DfXSyr22hgAPhx70"; // Сюди треба буде вставити токен від @BotFather
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: text,
+                    parse_mode: 'Markdown'
+                })
+            }).catch(err => console.error("Помилка відправки для " + chatId, err));
+        }
+
+        
         onValue(telemetryRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -209,23 +227,7 @@
                 }
             }
         });
-
-        // Функція відправки повідомлення через твого бота
-        function sendTelegramMessage(chatId, text) {
-        const botToken = "8745543021:AAHD8BInn11_0omhic5DfXSyr22hgAPhx70"; // Сюди треба буде вставити токен від @BotFather
-        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
         
-        fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: text,
-                parse_mode: 'Markdown'
-            })
-        }).catch(err => console.error("Помилка відправки для " + chatId, err));
-        }
-
         
         
         window.Telegram.WebApp.ready();
