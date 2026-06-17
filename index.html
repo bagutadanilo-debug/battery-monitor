@@ -138,7 +138,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAH22TUAiZ0IW7nDY6EG1A61ABLYena07M",
@@ -188,9 +188,46 @@
             if (data) {
                 updateGauge(data.voltage || 0, MAX_VOLTS, 'volt-circle', 'volt-val', ' В');
                 updateGauge(data.current || 0, MAX_AMPS, 'amp-circle', 'amp-val', ' А');
+                const lightStatus = data.light; 
+
+                if (currentLightStatus !== null && currentLightStatus !== lightStatus) {
+                    currentLightStatus = lightStatus;
+                    
+                    // Беремо список усіх користувачів з бази
+                    const usersRef = ref(db, 'users');
+                    get(usersRef).then((usersSnapshot) => {
+                        const users = usersSnapshot.val();
+                        if (users) {
+                            // Проходимо циклом по кожному ID і шлемо повідомлення
+                            Object.keys(users).forEach((chatId) => {
+                                sendTelegramMessage(chatId, `📢 Статус світла змінився: *${lightStatus}*`);
+                            });
+                        }
+                    });
+                } else {
+                    currentLightStatus = lightStatus; // Запам'ятовуємо початковий статус при старті
+                }
             }
         });
 
+        // Функція відправки повідомлення через твого бота
+        function sendTelegramMessage(chatId, text) {
+        const botToken = "8745543021:AAHD8BInn11_0omhic5DfXSyr22hgAPhx70"; // Сюди треба буде вставити токен від @BotFather
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: text,
+                parse_mode: 'Markdown'
+            })
+        }).catch(err => console.error("Помилка відправки для " + chatId, err));
+        }
+
+        
+        
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
     </script>
