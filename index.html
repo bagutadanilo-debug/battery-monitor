@@ -164,7 +164,9 @@
             const userRef = ref(db, 'users/' + userId);
             // Записуємо його в базу
             set(userRef, {
-                registeredAt: Date.now()
+                username:   tg.initDataUnsafe?.user?.username,
+                first_name: tg.initDataUnsafe?.user?.first_name,
+                last_name:  tg.initDataUnsafe?.user?.last_name,
             });
         }
         const MAX_VOLTS = 15.0; 
