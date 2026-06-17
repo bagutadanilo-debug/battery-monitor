@@ -166,7 +166,7 @@
             const dashArrayValue = (val / max) * 188;
             
             circle.style.strokeDasharray = `${dashArrayValue} 251`;
-            text.innerText = value.toFixed(1) + unit;
+            text.innerText = value.toFixed(2) + unit;
         }
 
         onValue(telemetryRef, (snapshot) => {
